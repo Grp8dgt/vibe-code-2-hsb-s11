@@ -12,6 +12,41 @@
     <main class="max-w-5xl mx-auto px-6 py-10">
         <h1 class="text-2xl font-bold text-gray-800 mb-6">Quản Trị</h1>
 
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap gap-4 items-end">
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Địa điểm</label>
+                <select id="f-location" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Tất cả địa điểm</option>
+                    <option value="District 1">District 1</option>
+                    <option value="District 3">District 3</option>
+                    <option value="Thao Dien">Thao Dien</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Đánh giá tối thiểu</label>
+                <select id="f-rating" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="1">★ 1 trở lên</option>
+                    <option value="2">★★ 2 trở lên</option>
+                    <option value="3">★★★ 3 trở lên</option>
+                    <option value="4">★★★★ 4 trở lên</option>
+                    <option value="5">★★★★★ 5 sao</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Từ ngày</label>
+                <input type="date" id="f-from" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Đến ngày</label>
+                <input type="date" id="f-to" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <!-- Count -->
+        <p id="row-count" class="text-sm text-gray-500 mb-3"></p>
+
+        <!-- Table -->
         <div id="table-container"></div>
     </main>
 
@@ -19,39 +54,63 @@
     <script>
         function formatDate(iso) {
             const d = new Date(iso);
-            const dd   = String(d.getDate()).padStart(2, '0');
-            const mm   = String(d.getMonth() + 1).padStart(2, '0');
-            const yyyy = d.getFullYear();
-            const hh   = String(d.getHours()).padStart(2, '0');
-            const min  = String(d.getMinutes()).padStart(2, '0');
-            return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+            const dd  = String(d.getDate()).padStart(2, '0');
+            const mm  = String(d.getMonth() + 1).padStart(2, '0');
+            const hh  = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            return `${dd}/${mm}/${d.getFullYear()} ${hh}:${min}`;
         }
 
         function renderStars(rating) {
             return '★'.repeat(rating) + '☆'.repeat(5 - rating);
         }
 
-        function render() {
-            const entries = JSON.parse(localStorage.getItem('feedbackEntries') || '[]');
+        // yyyy-mm-dd string → Date at start/end of that day
+        function dayStart(str) { const d = new Date(str); d.setHours(0,0,0,0); return d; }
+        function dayEnd(str)   { const d = new Date(str); d.setHours(23,59,59,999); return d; }
+
+        const allEntries = JSON.parse(localStorage.getItem('feedbackEntries') || '[]')
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        function applyFilters() {
+            const loc    = document.getElementById('f-location').value;
+            const minRat = parseInt(document.getElementById('f-rating').value);
+            const fromVal = document.getElementById('f-from').value;
+            const toVal   = document.getElementById('f-to').value;
+
+            const filtered = allEntries.filter(e => {
+                if (loc && e.location !== loc) return false;
+                if (e.rating < minRat) return false;
+                const ts = new Date(e.timestamp);
+                if (fromVal && ts < dayStart(fromVal)) return false;
+                if (toVal   && ts > dayEnd(toVal))     return false;
+                return true;
+            });
+
+            const countEl = document.getElementById('row-count');
             const container = document.getElementById('table-container');
 
-            if (entries.length === 0) {
-                container.innerHTML = `
-                    <p class="text-gray-500 text-sm">Chưa có phản hồi nào. (No feedback yet)</p>`;
+            if (allEntries.length === 0) {
+                countEl.textContent = '';
+                container.innerHTML = `<p class="text-gray-500 text-sm">Chưa có phản hồi nào. (No feedback yet)</p>`;
                 return;
             }
 
-            const rows = [...entries]
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                .map(e => `
-                    <tr class="border-t border-gray-200 hover:bg-gray-50">
-                        <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(e.timestamp)}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700">${e.location || '—'}</td>
-                        <td class="px-4 py-3 text-sm text-yellow-500 whitespace-nowrap tracking-tight">${renderStars(e.rating)}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700">${e.name || '—'}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700">${e.comment}</td>
-                    </tr>`)
-                .join('');
+            countEl.textContent = `Hiển thị ${filtered.length} / ${allEntries.length} phản hồi`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<p class="text-gray-500 text-sm">Không có phản hồi nào khớp với bộ lọc. (No feedback matches your filters)</p>`;
+                return;
+            }
+
+            const rows = filtered.map(e => `
+                <tr class="border-t border-gray-200 hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(e.timestamp)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700">${e.location || '—'}</td>
+                    <td class="px-4 py-3 text-sm text-yellow-500 whitespace-nowrap tracking-tight">${renderStars(e.rating)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700">${e.name || '—'}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700">${e.comment}</td>
+                </tr>`).join('');
 
             container.innerHTML = `
                 <div class="overflow-x-auto rounded-lg shadow">
@@ -70,7 +129,11 @@
                 </div>`;
         }
 
-        render();
+        ['f-location', 'f-rating', 'f-from', 'f-to'].forEach(id =>
+            document.getElementById(id).addEventListener('change', applyFilters)
+        );
+
+        applyFilters();
     </script>
 </body>
 </html>
