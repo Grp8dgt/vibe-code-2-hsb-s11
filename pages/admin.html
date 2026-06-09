@@ -43,8 +43,14 @@
             </div>
         </div>
 
-        <!-- Count -->
-        <p id="row-count" class="text-sm text-gray-500 mb-3"></p>
+        <!-- Count + Export -->
+        <div class="flex items-center justify-between mb-3">
+            <p id="row-count" class="text-sm text-gray-500"></p>
+            <button id="btn-export"
+                class="bg-green-600 text-white text-sm font-medium px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                Xuất CSV
+            </button>
+        </div>
 
         <!-- Table -->
         <div id="table-container"></div>
@@ -78,13 +84,15 @@
         const allEntries = JSON.parse(localStorage.getItem('feedbackEntries') || '[]')
             .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
+        let currentFiltered = [];
+
         function applyFilters() {
             const loc    = document.getElementById('f-location').value;
             const minRat = parseInt(document.getElementById('f-rating').value);
             const fromVal = document.getElementById('f-from').value;
             const toVal   = document.getElementById('f-to').value;
 
-            const filtered = allEntries.filter(e => {
+            currentFiltered = allEntries.filter(e => {
                 if (loc && e.location !== loc) return false;
                 if (e.rating < minRat) return false;
                 const ts = new Date(e.timestamp);
@@ -102,14 +110,14 @@
                 return;
             }
 
-            countEl.textContent = `Hiển thị ${filtered.length} / ${allEntries.length} phản hồi`;
+            countEl.textContent = `Hiển thị ${currentFiltered.length} / ${allEntries.length} phản hồi`;
 
-            if (filtered.length === 0) {
+            if (currentFiltered.length === 0) {
                 container.innerHTML = `<p class="text-gray-500 text-sm">Không có phản hồi nào khớp với bộ lọc. (No feedback matches your filters)</p>`;
                 return;
             }
 
-            const rows = filtered.map(e => `
+            const rows = currentFiltered.map(e => `
                 <tr class="border-t border-gray-200 ${rowBg(e.rating)}">
                     <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(e.timestamp)}</td>
                     <td class="px-4 py-3 text-sm text-gray-700">${e.location || '—'}</td>
@@ -138,6 +146,41 @@
         ['f-location', 'f-rating', 'f-from', 'f-to'].forEach(id =>
             document.getElementById(id).addEventListener('change', applyFilters)
         );
+
+        function csvField(val) {
+            // Wrap in quotes; escape any existing double-quotes by doubling them
+            return '"' + String(val ?? '').replace(/"/g, '""') + '"';
+        }
+
+        document.getElementById('btn-export').addEventListener('click', () => {
+            if (currentFiltered.length === 0) {
+                alert('Nothing to export');
+                return;
+            }
+
+            const header = 'Date,Location,Rating,Name,Comment';
+            const lines = currentFiltered.map(e =>
+                [
+                    formatDate(e.timestamp),
+                    e.location || '',
+                    e.rating,
+                    e.name || '',
+                    csvField(e.comment)
+                ].join(',')
+            );
+
+            const BOM = '﻿';
+            const csv = BOM + [header, ...lines].join('\r\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+
+            const today = new Date().toISOString().slice(0, 10);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `feedback-export-${today}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
 
         applyFilters();
     </script>
