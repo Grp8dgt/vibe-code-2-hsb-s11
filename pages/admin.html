@@ -10,8 +10,67 @@
 <body class="bg-gray-50 min-h-screen">
     <div id="app-nav"></div>
     <main class="max-w-5xl mx-auto px-6 py-10">
-        <h1 class="text-2xl font-bold text-gray-800">Quản Trị</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Quản Trị</h1>
+
+        <div id="table-container"></div>
     </main>
+
     <script src="../shared/nav.js"></script>
+    <script>
+        function formatDate(iso) {
+            const d = new Date(iso);
+            const dd   = String(d.getDate()).padStart(2, '0');
+            const mm   = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            const hh   = String(d.getHours()).padStart(2, '0');
+            const min  = String(d.getMinutes()).padStart(2, '0');
+            return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+        }
+
+        function renderStars(rating) {
+            return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+        }
+
+        function render() {
+            const entries = JSON.parse(localStorage.getItem('feedbackEntries') || '[]');
+            const container = document.getElementById('table-container');
+
+            if (entries.length === 0) {
+                container.innerHTML = `
+                    <p class="text-gray-500 text-sm">Chưa có phản hồi nào. (No feedback yet)</p>`;
+                return;
+            }
+
+            const rows = [...entries]
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .map(e => `
+                    <tr class="border-t border-gray-200 hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(e.timestamp)}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">${e.location || '—'}</td>
+                        <td class="px-4 py-3 text-sm text-yellow-500 whitespace-nowrap tracking-tight">${renderStars(e.rating)}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">${e.name || '—'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">${e.comment}</td>
+                    </tr>`)
+                .join('');
+
+            container.innerHTML = `
+                <div class="overflow-x-auto rounded-lg shadow">
+                    <table class="min-w-full bg-white text-left">
+                        <thead class="bg-blue-700 text-white text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="px-4 py-3">Ngày</th>
+                                <th class="px-4 py-3">Địa điểm</th>
+                                <th class="px-4 py-3">Đánh giá</th>
+                                <th class="px-4 py-3">Tên</th>
+                                <th class="px-4 py-3">Nhận xét</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>`;
+        }
+
+        render();
+    </script>
 </body>
 </html>
