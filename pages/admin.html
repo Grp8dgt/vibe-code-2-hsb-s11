@@ -65,6 +65,12 @@
             return '★'.repeat(rating) + '☆'.repeat(5 - rating);
         }
 
+        function rowBg(rating) {
+            if (rating <= 2) return 'bg-red-100';
+            if (rating === 3) return 'bg-yellow-100';
+            return 'bg-green-100';
+        }
+
         // yyyy-mm-dd string → Date at start/end of that day
         function dayStart(str) { const d = new Date(str); d.setHours(0,0,0,0); return d; }
         function dayEnd(str)   { const d = new Date(str); d.setHours(23,59,59,999); return d; }
@@ -104,7 +110,7 @@
             }
 
             const rows = filtered.map(e => `
-                <tr class="border-t border-gray-200 hover:bg-gray-50">
+                <tr class="border-t border-gray-200 ${rowBg(e.rating)}">
                     <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(e.timestamp)}</td>
                     <td class="px-4 py-3 text-sm text-gray-700">${e.location || '—'}</td>
                     <td class="px-4 py-3 text-sm text-yellow-500 whitespace-nowrap tracking-tight">${renderStars(e.rating)}</td>
