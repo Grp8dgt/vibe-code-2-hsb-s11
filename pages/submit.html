@@ -10,8 +10,136 @@
 <body class="bg-gray-50 min-h-screen">
     <div id="app-nav"></div>
     <main class="max-w-2xl mx-auto px-6 py-10">
-        <h1 class="text-2xl font-bold text-gray-800">Gửi Phản Hồi</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Gửi Phản Hồi</h1>
+
+        <div id="success-msg" class="hidden bg-green-100 text-green-800 border border-green-300 rounded px-4 py-3 mb-6">
+            Cảm ơn bạn đã gửi phản hồi! &#x2714;
+        </div>
+
+        <form id="feedback-form" class="bg-white rounded-lg shadow p-6 space-y-5" novalidate>
+
+            <!-- Name (optional) -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                    Họ và tên <span class="text-gray-400 font-normal">(không bắt buộc)</span>
+                </label>
+                <input type="text" id="name" name="name"
+                    placeholder="Nhập họ và tên của bạn"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Location -->
+            <div>
+                <label for="location" class="block text-sm font-medium text-gray-700 mb-1">
+                    Địa điểm
+                </label>
+                <select id="location" name="location"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Chọn địa điểm --</option>
+                    <option value="District 1">District 1</option>
+                    <option value="District 3">District 3</option>
+                    <option value="Thao Dien">Thao Dien</option>
+                </select>
+            </div>
+
+            <!-- Rating -->
+            <div>
+                <span class="block text-sm font-medium text-gray-700 mb-2">
+                    Đánh giá <span class="text-red-500">*</span>
+                </span>
+                <div id="star-container" class="flex gap-1">
+                    <button type="button" data-value="1" class="star text-3xl leading-none text-gray-300 transition-colors focus:outline-none">&#9733;</button>
+                    <button type="button" data-value="2" class="star text-3xl leading-none text-gray-300 transition-colors focus:outline-none">&#9733;</button>
+                    <button type="button" data-value="3" class="star text-3xl leading-none text-gray-300 transition-colors focus:outline-none">&#9733;</button>
+                    <button type="button" data-value="4" class="star text-3xl leading-none text-gray-300 transition-colors focus:outline-none">&#9733;</button>
+                    <button type="button" data-value="5" class="star text-3xl leading-none text-gray-300 transition-colors focus:outline-none">&#9733;</button>
+                </div>
+                <input type="hidden" id="rating" value="">
+                <p id="rating-error" class="hidden text-red-500 text-xs mt-1">Vui lòng chọn đánh giá.</p>
+            </div>
+
+            <!-- Comment (required) -->
+            <div>
+                <label for="comment" class="block text-sm font-medium text-gray-700 mb-1">
+                    Nhận xét <span class="text-red-500">*</span>
+                </label>
+                <textarea id="comment" name="comment" rows="4"
+                    placeholder="Nhập nhận xét của bạn..."
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"></textarea>
+                <p id="comment-error" class="hidden text-red-500 text-xs mt-1">Vui lòng nhập nhận xét.</p>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-blue-700 text-white font-semibold py-2 rounded hover:bg-blue-800 transition-colors">
+                Gửi Phản Hồi
+            </button>
+        </form>
     </main>
+
     <script src="../shared/nav.js"></script>
+    <script>
+        const stars = document.querySelectorAll('.star');
+        const ratingInput = document.getElementById('rating');
+
+        function paintStars(value) {
+            stars.forEach(s => {
+                const filled = parseInt(s.dataset.value) <= value;
+                s.classList.toggle('text-yellow-400', filled);
+                s.classList.toggle('text-gray-300', !filled);
+            });
+        }
+
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                ratingInput.value = star.dataset.value;
+                paintStars(parseInt(star.dataset.value));
+                document.getElementById('rating-error').classList.add('hidden');
+            });
+            star.addEventListener('mouseenter', () => paintStars(parseInt(star.dataset.value)));
+            star.addEventListener('mouseleave', () => paintStars(parseInt(ratingInput.value) || 0));
+        });
+
+        document.getElementById('comment').addEventListener('input', function () {
+            if (this.value.trim()) document.getElementById('comment-error').classList.add('hidden');
+        });
+
+        document.getElementById('feedback-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            let valid = true;
+
+            if (!ratingInput.value) {
+                document.getElementById('rating-error').classList.remove('hidden');
+                valid = false;
+            }
+
+            const commentEl = document.getElementById('comment');
+            if (!commentEl.value.trim()) {
+                document.getElementById('comment-error').classList.remove('hidden');
+                valid = false;
+            }
+
+            if (!valid) return;
+
+            const entry = {
+                name:      document.getElementById('name').value.trim(),
+                location:  document.getElementById('location').value,
+                rating:    parseInt(ratingInput.value),
+                comment:   commentEl.value.trim(),
+                timestamp: new Date().toISOString()
+            };
+
+            const entries = JSON.parse(localStorage.getItem('feedbackEntries') || '[]');
+            entries.push(entry);
+            localStorage.setItem('feedbackEntries', JSON.stringify(entries));
+
+            this.reset();
+            ratingInput.value = '';
+            paintStars(0);
+
+            const msg = document.getElementById('success-msg');
+            msg.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
 </body>
 </html>
