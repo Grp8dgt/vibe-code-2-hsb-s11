@@ -331,6 +331,13 @@
             try {
                 await addDoc(collection(db, 'feedbackEntries'), entry);
 
+                // Sync to Google Sheets in background (fire-and-forget)
+                fetch('/api/sync-entry', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(entry)
+                }).catch(() => {});
+
                 this.reset();
                 ratingInput.value = '';
                 locInput.value = '';
