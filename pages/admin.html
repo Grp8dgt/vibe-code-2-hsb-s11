@@ -78,14 +78,14 @@
 
         if (!user || !user.email.endsWith('@hsb.edu.vn')) {
             if (user) await signOut(auth);
-            window.location.href = 'login.html';
+            window.location.href = '/login';
             throw new Error('redirect');
         }
 
         const adminSnap = await getDoc(doc(db, 'admins', user.email));
         if (!adminSnap.exists()) {
             await signOut(auth);
-            window.location.href = 'login.html';
+            window.location.href = '/login';
             throw new Error('redirect');
         }
 
@@ -94,7 +94,7 @@
 
         document.getElementById('btn-logout').addEventListener('click', async () => {
             await signOut(auth);
-            window.location.href = 'login.html';
+            window.location.href = '/login';
         });
 
         function formatDate(iso) {

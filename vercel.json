@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    { "source": "/", "destination": "/submit", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/submit", "destination": "/pages/submit.html" },
+    { "source": "/admin",  "destination": "/pages/admin.html"  },
+    { "source": "/login",  "destination": "/pages/login.html"  }
+  ]
+}
