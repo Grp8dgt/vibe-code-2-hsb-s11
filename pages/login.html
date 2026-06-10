@@ -38,12 +38,18 @@
         const errorEl = document.getElementById('error-msg');
 
         async function checkAdminAndRedirect(user) {
-            const snap = await getDoc(doc(db, 'admins', user.email));
-            if (snap.exists()) {
-                window.location.href = 'admin.html';
-            } else {
+            try {
+                const snap = await getDoc(doc(db, 'admins', user.email));
+                if (snap.exists()) {
+                    window.location.href = 'admin.html';
+                } else {
+                    await signOut(auth);
+                    errorEl.innerHTML = 'Tài khoản <strong>' + user.email + '</strong> không có trong danh sách quản trị.<br><small>Hãy thêm email này vào collection <code>admins</code> trong Firestore.</small>';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (err) {
                 await signOut(auth);
-                errorEl.textContent = 'Tài khoản ' + user.email + ' không có quyền truy cập.';
+                errorEl.innerHTML = 'Lỗi kiểm tra quyền: <strong>' + err.message + '</strong><br><small>Email: ' + user.email + '</small>';
                 errorEl.classList.remove('hidden');
             }
         }
