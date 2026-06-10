@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản Trị</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="../shared/style.css">
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -52,6 +53,22 @@
             </div>
         </div>
 
+        <!-- Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Phân bố đánh giá</h3>
+                <canvas id="chart-rating"></canvas>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Theo địa điểm</h3>
+                <canvas id="chart-location"></canvas>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Theo thời gian</h3>
+                <canvas id="chart-timeline"></canvas>
+            </div>
+        </div>
+
         <!-- Count + Export -->
         <div class="flex items-center justify-between mb-3">
             <p id="row-count" class="text-sm text-gray-500"></p>
@@ -91,6 +108,71 @@
 
         document.getElementById('auth-loading').classList.add('hidden');
         document.getElementById('main-content').classList.remove('hidden');
+
+        // --- Charts ---
+        const ratingChart = new Chart(document.getElementById('chart-rating'), {
+            type: 'bar',
+            data: {
+                labels: ['1★', '2★', '3★', '4★', '5★'],
+                datasets: [{
+                    data: [0, 0, 0, 0, 0],
+                    backgroundColor: ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+
+        const locationChart = new Chart(document.getElementById('chart-location'), {
+            type: 'doughnut',
+            data: { labels: [], datasets: [{ data: [], backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+        });
+
+        const timelineChart = new Chart(document.getElementById('chart-timeline'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Phản hồi',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+
+        function updateCharts(entries) {
+            const ratingCounts = [0, 0, 0, 0, 0];
+            entries.forEach(e => { if (e.rating >= 1 && e.rating <= 5) ratingCounts[e.rating - 1]++; });
+            ratingChart.data.datasets[0].data = ratingCounts;
+            ratingChart.update();
+
+            const locMap = {};
+            entries.forEach(e => { const k = e.location || 'Khác'; locMap[k] = (locMap[k] || 0) + 1; });
+            locationChart.data.labels = Object.keys(locMap);
+            locationChart.data.datasets[0].data = Object.values(locMap);
+            locationChart.update();
+
+            const dayMap = {};
+            entries.forEach(e => { const d = e.timestamp.slice(0, 10); dayMap[d] = (dayMap[d] || 0) + 1; });
+            const days = Object.keys(dayMap).sort();
+            timelineChart.data.labels = days.map(d => { const [y, m, day] = d.split('-'); return `${day}/${m}`; });
+            timelineChart.data.datasets[0].data = days.map(d => dayMap[d]);
+            timelineChart.update();
+        }
 
         document.getElementById('btn-logout').addEventListener('click', async () => {
             await signOut(auth);
@@ -147,6 +229,8 @@
                 if (toVal   && ts > dayEnd(toVal))     return false;
                 return true;
             });
+
+            updateCharts(currentFiltered);
 
             const countEl = document.getElementById('row-count');
 
