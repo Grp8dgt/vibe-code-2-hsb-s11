@@ -79,6 +79,7 @@
         if (!user || !user.email.endsWith('@hsb.edu.vn')) {
             if (user) await signOut(auth);
             window.location.href = 'login.html';
+            throw new Error('redirect');
         }
 
         document.getElementById('auth-loading').classList.add('hidden');
@@ -122,7 +123,7 @@
             allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (err) {
             console.error(err);
-            container.innerHTML = '<p class="text-red-500 text-sm">Không thể tải dữ liệu. Vui lòng thử lại.</p>';
+            container.innerHTML = '<p class="text-red-500 text-sm">Lỗi tải dữ liệu: <b>' + err.code + '</b> — ' + err.message + '</p>';
         }
 
         function applyFilters() {
