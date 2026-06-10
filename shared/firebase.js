@@ -15,3 +15,6 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const analytics = getAnalytics(app);
 export const db = getFirestore(app);
+
+console.log('[Firebase] project:', firebaseConfig.projectId);
+console.log('[Firebase] Firestore ready:', !!db);
