@@ -11,13 +11,18 @@ const SPREADSHEET_ID = '1V0Os-5oE90-G1A3Do1MUBiwNtFoi1HEGHISdsHs8W3s';
 const SHEET_TAB      = 'Sheet1';
 const CREDS_PATH     = path.resolve(__dirname, '..', 'credentials.json');
 
-// ── Load credentials ──────────────────────────────────────────
-if (!fs.existsSync(CREDS_PATH)) {
-  console.error('✗  credentials.json not found at project root.');
-  console.error('   Download it from Firebase Console → Project Settings → Service Accounts → Generate new private key');
+// ── Load credentials (env var for CI, file for local) ─────────
+let credentials;
+if (process.env.GOOGLE_CREDENTIALS) {
+  credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+} else if (fs.existsSync(CREDS_PATH)) {
+  credentials = JSON.parse(fs.readFileSync(CREDS_PATH, 'utf8'));
+} else {
+  console.error('✗  No credentials found.');
+  console.error('   Local: add credentials.json to project root');
+  console.error('   CI:    set GOOGLE_CREDENTIALS secret in GitHub');
   process.exit(1);
 }
-const credentials = JSON.parse(fs.readFileSync(CREDS_PATH, 'utf8'));
 
 // ── Firebase Admin (Firestore read) ───────────────────────────
 initializeApp({ credential: cert(credentials) });

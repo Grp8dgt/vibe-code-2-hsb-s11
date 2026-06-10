@@ -1,0 +1,25 @@
+name: Sync Firestore → Google Sheets
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # every hour  (change to '0 0 * * *' for once daily)
+  workflow_dispatch:        # allow manual trigger from GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Sync to Google Sheets
+        run: npm run sync
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
