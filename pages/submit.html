@@ -223,6 +223,8 @@
 
     <script src="../shared/nav.js"></script>
     <script type="module">
+        import { inject } from 'https://esm.sh/@vercel/analytics@2.0.1';
+        inject();
         import { db } from '../shared/firebase.js';
         import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
