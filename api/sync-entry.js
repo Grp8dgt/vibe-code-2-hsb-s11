@@ -21,6 +21,10 @@ module.exports = async function handler(req, res) {
   try {
     const entry       = req.body;
     const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    // Vercel env vars double-escape \n in private keys — repair before auth
+    if (credentials.private_key) {
+      credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
+    }
 
     const auth = new google.auth.GoogleAuth({
       credentials,

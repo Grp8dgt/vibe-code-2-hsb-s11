@@ -331,12 +331,14 @@
             try {
                 await addDoc(collection(db, 'feedbackEntries'), entry);
 
-                // Sync to Google Sheets in background (fire-and-forget)
+                // Sync to Google Sheets
                 fetch('/api/sync-entry', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(entry)
-                }).catch(() => {});
+                }).then(r => r.json()).then(data => {
+                    if (!data.ok) console.warn('Sheets sync error:', data.error);
+                }).catch(err => console.warn('Sheets sync failed:', err.message));
 
                 this.reset();
                 ratingInput.value = '';
