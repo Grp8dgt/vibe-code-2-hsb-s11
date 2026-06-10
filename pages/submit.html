@@ -6,176 +6,351 @@
     <title>Gửi Phản Hồi — HSB Feedback</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../shared/style.css">
+    <style>
+        .page-wrap {
+            min-height: calc(100vh - 56px);
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+        @media (min-width: 1024px) {
+            .page-wrap { grid-template-columns: 400px 1fr; }
+            .mobile-header { display: none; }
+        }
+
+        /* Left panel */
+        .left-panel {
+            display: none;
+            position: relative;
+            overflow: hidden;
+            padding: 3rem 2.5rem;
+            flex-direction: column;
+            justify-content: center;
+            background: linear-gradient(160deg, #0d1f13 0%, #0a1628 50%, #0f172a 100%);
+            border-right: 1px solid rgba(255,255,255,0.06);
+        }
+        @media (min-width: 1024px) { .left-panel { display: flex; } }
+
+        .deco { position: absolute; border-radius: 50%; pointer-events: none; }
+
+        /* Location pills */
+        .loc-pill {
+            flex: 1; padding: 10px 6px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1); background: transparent;
+            color: #64748b; font-size: 0.8125rem; font-weight: 500;
+            cursor: pointer; transition: all 0.15s; text-align: center; font-family: inherit;
+        }
+        .loc-pill:hover { border-color: rgba(255,255,255,0.2); color: #94a3b8; background: rgba(255,255,255,0.04); }
+        .loc-pill.sel { border-color: #22c55e; color: #4ade80; background: rgba(34,197,94,0.1); }
+
+        /* Stars */
+        .star-btn {
+            font-size: 2.25rem; color: #1e293b; cursor: pointer;
+            transition: color 0.1s, transform 0.12s; line-height: 1;
+            background: none; border: none; padding: 2px 4px;
+        }
+        .star-btn:hover, .star-btn.lit { color: #facc15; }
+        .star-btn:hover { transform: scale(1.25); }
+
+        /* Field */
+        .field {
+            width: 100%; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.09); color: #f1f5f9;
+            border-radius: 12px; padding: 12px 16px; font-size: 0.875rem;
+            outline: none; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+            font-family: inherit;
+        }
+        .field::placeholder { color: #2d3d52; }
+        .field:focus { border-color: rgba(59,130,246,0.5); background: rgba(59,130,246,0.04); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .field option { background: #0f172a; }
+
+        /* Submit button */
+        .sub-btn {
+            width: 100%; padding: 14px 24px; border-radius: 14px; border: none;
+            background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+            color: #fff; font-size: 0.9375rem; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+            box-shadow: 0 4px 20px rgba(34,197,94,0.3), 0 1px 3px rgba(0,0,0,0.3);
+            font-family: inherit; letter-spacing: -0.01em; position: relative; overflow: hidden;
+        }
+        .sub-btn::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+        }
+        .sub-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(34,197,94,0.4), 0 2px 6px rgba(0,0,0,0.3); }
+        .sub-btn:active:not(:disabled) { transform: translateY(0); }
+        .sub-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .sub-btn .arrow { transition: transform 0.15s; position: relative; }
+        .sub-btn:hover:not(:disabled) .arrow { transform: translateX(4px); }
+
+        /* Feature item */
+        .feat { display: flex; align-items: flex-start; gap: 12px; }
+        .feat-icon { width: 30px; height: 30px; border-radius: 8px; background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.18); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+
+        /* Label */
+        .field-label { display: block; font-size: 0.75rem; font-weight: 600; color: #475569; margin-bottom: 8px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; position: relative; }
+    </style>
 </head>
-<body class="min-h-screen" style="background:#020617;">
+<body style="background:#020617;">
     <div id="app-nav"></div>
 
-    <main class="max-w-xl mx-auto px-4 sm:px-6 py-10">
+    <div class="page-wrap">
 
-        <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-2xl font-semibold text-white mb-1">Gửi Phản Hồi</h1>
-            <p class="text-sm" style="color:#64748b;">Chia sẻ trải nghiệm của bạn với chúng tôi</p>
-        </div>
+        <!-- ── Left brand panel ─────────────────────────────── -->
+        <div class="left-panel">
+            <div class="deco" style="width:500px;height:500px;top:-180px;left:-180px;background:radial-gradient(circle,rgba(34,197,94,0.07) 0%,transparent 65%);"></div>
+            <div class="deco" style="width:350px;height:350px;bottom:-120px;right:-100px;background:radial-gradient(circle,rgba(59,130,246,0.06) 0%,transparent 65%);"></div>
 
-        <!-- Success -->
-        <div id="success-msg" class="hidden rounded-xl px-4 py-4 mb-6 flex items-start gap-3" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);">
-            <svg class="w-5 h-5 mt-0.5 flex-shrink-0" style="color:#4ade80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <div>
-                <p class="font-medium text-sm" style="color:#4ade80;">Gửi thành công!</p>
-                <p class="text-sm mt-0.5" style="color:#86efac;">Cảm ơn bạn đã chia sẻ phản hồi với chúng tôi.</p>
-            </div>
-        </div>
-
-        <!-- Error -->
-        <div id="error-msg" class="hidden rounded-xl px-4 py-3 mb-6 text-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#f87171;"></div>
-
-        <!-- Form -->
-        <form id="feedback-form" class="rounded-2xl p-6 space-y-5" style="background:#0f172a;border:1px solid rgba(255,255,255,0.08);" novalidate>
-
-            <!-- Name -->
-            <div>
-                <label for="name" class="block text-sm font-medium mb-1.5" style="color:#94a3b8;">
-                    Họ và tên <span class="font-normal text-xs" style="color:#475569;">(không bắt buộc)</span>
-                </label>
-                <input type="text" id="name" name="name" class="dark-input"
-                    placeholder="Nhập họ và tên của bạn">
+            <!-- Brand -->
+            <div style="width:52px;height:52px;border-radius:14px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.18);display:flex;align-items:center;justify-content:center;margin-bottom:2rem;">
+                <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="#4ade80" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z"/>
+                </svg>
             </div>
 
-            <!-- Location -->
-            <div>
-                <label for="location" class="block text-sm font-medium mb-1.5" style="color:#94a3b8;">Địa điểm</label>
-                <select id="location" name="location" class="dark-input" style="cursor:pointer;">
-                    <option value="">-- Chọn địa điểm --</option>
-                    <option value="District 1">District 1</option>
-                    <option value="District 3">District 3</option>
-                    <option value="Thao Dien">Thao Dien</option>
-                </select>
-            </div>
+            <h2 style="font-size:1.75rem;font-weight:700;color:#f8fafc;line-height:1.25;margin-bottom:0.75rem;letter-spacing:-0.02em;">
+                Tiếng nói của bạn<br>
+                <span style="color:#4ade80;">quan trọng với chúng tôi</span>
+            </h2>
+            <p style="color:#475569;font-size:0.875rem;line-height:1.7;margin-bottom:2.5rem;">
+                Mỗi phản hồi giúp chúng tôi cải thiện dịch vụ và mang lại trải nghiệm tốt hơn cho mọi khách hàng.
+            </p>
 
-            <!-- Rating -->
-            <div>
-                <span class="block text-sm font-medium mb-2" style="color:#94a3b8;">
-                    Đánh giá <span style="color:#ef4444;">*</span>
-                </span>
-                <div id="star-container" class="flex gap-1">
-                    <button type="button" data-value="1" class="star" aria-label="1 sao">&#9733;</button>
-                    <button type="button" data-value="2" class="star" aria-label="2 sao">&#9733;</button>
-                    <button type="button" data-value="3" class="star" aria-label="3 sao">&#9733;</button>
-                    <button type="button" data-value="4" class="star" aria-label="4 sao">&#9733;</button>
-                    <button type="button" data-value="5" class="star" aria-label="5 sao">&#9733;</button>
+            <div style="display:flex;flex-direction:column;gap:1.125rem;">
+                <div class="feat">
+                    <div class="feat-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#4ade80" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+                    <div><p style="color:#e2e8f0;font-size:0.875rem;font-weight:500;">Ẩn danh hoàn toàn</p><p style="color:#3d5166;font-size:0.8rem;margin-top:2px;">Họ tên là tùy chọn, không bắt buộc</p></div>
                 </div>
-                <input type="hidden" id="rating" value="">
-                <p id="rating-error" class="hidden text-xs mt-1.5" style="color:#f87171;">Vui lòng chọn đánh giá.</p>
+                <div class="feat">
+                    <div class="feat-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#4ade80" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+                    <div><p style="color:#e2e8f0;font-size:0.875rem;font-weight:500;">Được ban quản lý đọc trực tiếp</p><p style="color:#3d5166;font-size:0.8rem;margin-top:2px;">Mọi phản hồi đều được xem xét</p></div>
+                </div>
+                <div class="feat">
+                    <div class="feat-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#4ade80" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+                    <div><p style="color:#e2e8f0;font-size:0.875rem;font-weight:500;">Chỉ mất dưới 1 phút</p><p style="color:#3d5166;font-size:0.8rem;margin-top:2px;">Form đơn giản, nhanh chóng</p></div>
+                </div>
             </div>
+        </div>
 
-            <!-- Comment -->
-            <div>
-                <label for="comment" class="block text-sm font-medium mb-1.5" style="color:#94a3b8;">
-                    Nhận xét <span style="color:#ef4444;">*</span>
-                </label>
-                <textarea id="comment" name="comment" rows="4" class="dark-input resize-y"
-                    placeholder="Nhập nhận xét của bạn..."></textarea>
-                <p id="comment-error" class="hidden text-xs mt-1.5" style="color:#f87171;">Vui lòng nhập nhận xét.</p>
+        <!-- ── Right form panel ─────────────────────────────── -->
+        <div style="display:flex;align-items:center;justify-content:center;padding:2.5rem 1.5rem;">
+            <div style="width:100%;max-width:460px;">
+
+                <!-- Mobile header -->
+                <div class="mobile-header" style="margin-bottom:1.75rem;">
+                    <h1 style="font-size:1.5rem;font-weight:700;color:#f8fafc;letter-spacing:-0.02em;margin-bottom:4px;">Gửi Phản Hồi</h1>
+                    <p style="color:#475569;font-size:0.875rem;">Chia sẻ trải nghiệm của bạn với chúng tôi</p>
+                </div>
+
+                <!-- Success banner -->
+                <div id="success-msg" style="display:none;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:14px;padding:16px 18px;margin-bottom:20px;gap:12px;align-items:flex-start;">
+                    <svg style="color:#4ade80;flex-shrink:0;margin-top:1px;" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div>
+                        <p style="color:#4ade80;font-weight:600;font-size:0.875rem;">Gửi thành công!</p>
+                        <p style="color:#86efac;font-size:0.8125rem;margin-top:3px;">Cảm ơn bạn đã chia sẻ phản hồi với chúng tôi.</p>
+                    </div>
+                </div>
+
+                <!-- Error banner -->
+                <div id="error-msg" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:14px;padding:14px 18px;margin-bottom:20px;color:#f87171;font-size:0.875rem;line-height:1.55;"></div>
+
+                <!-- Form card -->
+                <div style="background:#0c1a2e;border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:2rem;">
+                    <form id="feedback-form" novalidate style="display:flex;flex-direction:column;gap:22px;">
+
+                        <!-- Name -->
+                        <div>
+                            <label for="name" class="field-label">Họ và tên <span style="color:#2d3d52;text-transform:none;font-weight:400;">(tùy chọn)</span></label>
+                            <input type="text" id="name" name="name" class="field" placeholder="Nguyễn Văn A">
+                        </div>
+
+                        <!-- Location -->
+                        <div>
+                            <p class="field-label">Địa điểm</p>
+                            <div style="display:flex;gap:8px;">
+                                <button type="button" class="loc-pill" data-loc="District 1">District 1</button>
+                                <button type="button" class="loc-pill" data-loc="District 3">District 3</button>
+                                <button type="button" class="loc-pill" data-loc="Thao Dien">Thảo Điền</button>
+                            </div>
+                            <input type="hidden" id="location" name="location" value="">
+                        </div>
+
+                        <!-- Rating -->
+                        <div>
+                            <p class="field-label">Đánh giá <span style="color:#ef4444;text-transform:none;">*</span></p>
+                            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:0;row-gap:8px;">
+                                <div style="display:flex;align-items:center;">
+                                    <button type="button" class="star-btn" data-value="1" aria-label="1 sao">★</button>
+                                    <button type="button" class="star-btn" data-value="2" aria-label="2 sao">★</button>
+                                    <button type="button" class="star-btn" data-value="3" aria-label="3 sao">★</button>
+                                    <button type="button" class="star-btn" data-value="4" aria-label="4 sao">★</button>
+                                    <button type="button" class="star-btn" data-value="5" aria-label="5 sao">★</button>
+                                </div>
+                                <span id="rating-label" style="margin-left:10px;font-size:0.875rem;font-weight:600;transition:color 0.2s,opacity 0.2s;opacity:0;"></span>
+                            </div>
+                            <input type="hidden" id="rating" value="">
+                            <p id="rating-error" style="display:none;color:#f87171;font-size:0.75rem;margin-top:6px;">Vui lòng chọn đánh giá.</p>
+                        </div>
+
+                        <!-- Comment -->
+                        <div>
+                            <label for="comment" class="field-label">Nhận xét <span style="color:#ef4444;text-transform:none;">*</span></label>
+                            <textarea id="comment" name="comment" rows="4" class="field"
+                                style="resize:vertical;min-height:96px;"
+                                placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+                            <p id="comment-error" style="display:none;color:#f87171;font-size:0.75rem;margin-top:6px;">Vui lòng nhập nhận xét.</p>
+                        </div>
+
+                        <!-- Submit -->
+                        <button type="submit" id="submit-btn" class="sub-btn">
+                            <span id="btn-text">Gửi Phản Hồi</span>
+                            <svg class="arrow" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                            </svg>
+                        </button>
+
+                    </form>
+                </div>
+
             </div>
-
-            <!-- Submit -->
-            <button type="submit" id="submit-btn"
-                class="w-full py-2.5 rounded-xl text-sm font-semibold transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                style="background:#22c55e;color:#fff;focus-ring-offset-color:#0f172a;">
-                Gửi Phản Hồi
-            </button>
-        </form>
-    </main>
+        </div>
+    </div>
 
     <script src="../shared/nav.js"></script>
     <script type="module">
         import { db } from '../shared/firebase.js';
         import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
-        const stars      = document.querySelectorAll('.star');
-        const ratingInput = document.getElementById('rating');
-        const submitBtn  = document.getElementById('submit-btn');
-
-        function paintStars(value) {
-            stars.forEach(s => {
-                const filled = parseInt(s.dataset.value) <= value;
-                s.style.color = filled ? '#facc15' : '#334155';
-                s.classList.toggle('active', filled);
+        // Location pills
+        const locPills = document.querySelectorAll('.loc-pill');
+        const locInput = document.getElementById('location');
+        locPills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                locPills.forEach(p => p.classList.remove('sel'));
+                pill.classList.add('sel');
+                locInput.value = pill.dataset.loc;
             });
+        });
+
+        // Star rating
+        const stars       = document.querySelectorAll('.star-btn');
+        const ratingInput = document.getElementById('rating');
+        const ratingLabel = document.getElementById('rating-label');
+
+        const LABELS = {
+            1: ['Rất tệ',      '#f87171'],
+            2: ['Không tốt',   '#fb923c'],
+            3: ['Bình thường', '#facc15'],
+            4: ['Tốt',         '#a3e635'],
+            5: ['Xuất sắc!',   '#4ade80']
+        };
+
+        function paintStars(v) {
+            stars.forEach(s => {
+                const on = parseInt(s.dataset.value) <= v;
+                s.style.color = on ? '#facc15' : '#1e293b';
+                s.classList.toggle('lit', on);
+            });
+        }
+
+        function showLabel(v) {
+            if (!v) { ratingLabel.style.opacity = '0'; return; }
+            const [text, color] = LABELS[v];
+            ratingLabel.textContent = text;
+            ratingLabel.style.color = color;
+            ratingLabel.style.opacity = '1';
         }
 
         stars.forEach(star => {
             star.addEventListener('click', () => {
                 ratingInput.value = star.dataset.value;
                 paintStars(parseInt(star.dataset.value));
-                document.getElementById('rating-error').classList.add('hidden');
+                showLabel(parseInt(star.dataset.value));
+                document.getElementById('rating-error').style.display = 'none';
             });
-            star.addEventListener('mouseenter', () => paintStars(parseInt(star.dataset.value)));
-            star.addEventListener('mouseleave', () => paintStars(parseInt(ratingInput.value) || 0));
+            star.addEventListener('mouseenter', () => {
+                paintStars(parseInt(star.dataset.value));
+                showLabel(parseInt(star.dataset.value));
+            });
+            star.addEventListener('mouseleave', () => {
+                const cur = parseInt(ratingInput.value) || 0;
+                paintStars(cur);
+                showLabel(cur);
+            });
         });
 
         document.getElementById('comment').addEventListener('input', function () {
-            if (this.value.trim()) document.getElementById('comment-error').classList.add('hidden');
+            if (this.value.trim()) document.getElementById('comment-error').style.display = 'none';
         });
 
-        submitBtn.addEventListener('mouseover', () => { if (!submitBtn.disabled) submitBtn.style.background = '#16a34a'; });
-        submitBtn.addEventListener('mouseout',  () => { if (!submitBtn.disabled) submitBtn.style.background = '#22c55e'; });
+        // Submit
+        const submitBtn = document.getElementById('submit-btn');
+        const btnText   = document.getElementById('btn-text');
+        const arrow     = submitBtn.querySelector('.arrow');
 
         document.getElementById('feedback-form').addEventListener('submit', async function (e) {
             e.preventDefault();
             let valid = true;
 
             if (!ratingInput.value) {
-                document.getElementById('rating-error').classList.remove('hidden');
+                document.getElementById('rating-error').style.display = 'block';
                 valid = false;
             }
-
             const commentEl = document.getElementById('comment');
             if (!commentEl.value.trim()) {
-                document.getElementById('comment-error').classList.remove('hidden');
+                document.getElementById('comment-error').style.display = 'block';
                 valid = false;
             }
-
             if (!valid) return;
 
             const entry = {
                 name:      document.getElementById('name').value.trim(),
-                location:  document.getElementById('location').value,
+                location:  locInput.value,
                 rating:    parseInt(ratingInput.value),
                 comment:   commentEl.value.trim(),
                 timestamp: new Date().toISOString()
             };
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Đang gửi...';
-            submitBtn.style.opacity = '0.6';
+            btnText.textContent = 'Đang gửi...';
+            arrow.style.display = 'none';
+            const spinner = document.createElement('div');
+            spinner.className = 'spinner';
+            submitBtn.appendChild(spinner);
 
             const errorEl = document.getElementById('error-msg');
-            errorEl.classList.add('hidden');
+            errorEl.style.display = 'none';
 
             try {
                 await addDoc(collection(db, 'feedbackEntries'), entry);
 
                 this.reset();
                 ratingInput.value = '';
+                locInput.value = '';
+                locPills.forEach(p => p.classList.remove('sel'));
                 paintStars(0);
+                showLabel(0);
 
-                document.getElementById('success-msg').classList.remove('hidden');
+                const successEl = document.getElementById('success-msg');
+                successEl.style.display = 'flex';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch (err) {
                 console.error(err);
                 errorEl.innerHTML = 'Lỗi gửi phản hồi'
                     + (err.code ? ' (<b>' + err.code + '</b>)' : '')
                     + ': ' + err.message;
-                errorEl.classList.remove('hidden');
+                errorEl.style.display = 'block';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
-                submitBtn.textContent = 'Gửi Phản Hồi';
+                btnText.textContent = 'Gửi Phản Hồi';
+                arrow.style.display = '';
+                spinner.remove();
             }
         });
     </script>
