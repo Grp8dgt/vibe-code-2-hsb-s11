@@ -77,7 +77,10 @@
     </main>
 
     <script src="../shared/nav.js"></script>
-    <script>
+    <script type="module">
+        import { db } from '../shared/firebase.js';
+        import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+
         const stars = document.querySelectorAll('.star');
         const ratingInput = document.getElementById('rating');
 
@@ -103,7 +106,7 @@
             if (this.value.trim()) document.getElementById('comment-error').classList.add('hidden');
         });
 
-        document.getElementById('feedback-form').addEventListener('submit', function (e) {
+        document.getElementById('feedback-form').addEventListener('submit', async function (e) {
             e.preventDefault();
             let valid = true;
 
@@ -128,17 +131,27 @@
                 timestamp: new Date().toISOString()
             };
 
-            const entries = JSON.parse(localStorage.getItem('feedbackEntries') || '[]');
-            entries.push(entry);
-            localStorage.setItem('feedbackEntries', JSON.stringify(entries));
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Đang gửi...';
 
-            this.reset();
-            ratingInput.value = '';
-            paintStars(0);
+            try {
+                await addDoc(collection(db, 'feedbackEntries'), entry);
 
-            const msg = document.getElementById('success-msg');
-            msg.classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+                this.reset();
+                ratingInput.value = '';
+                paintStars(0);
+
+                const msg = document.getElementById('success-msg');
+                msg.classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (err) {
+                console.error(err);
+                alert('Có lỗi khi gửi phản hồi. Vui lòng thử lại.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Gửi Phản Hồi';
+            }
         });
     </script>
 </body>
