@@ -26,8 +26,9 @@
     </div>
 
     <script type="module">
-        import { auth } from '../shared/firebase.js';
+        import { auth, db } from '../shared/firebase.js';
         import { signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
         const ALLOWED_DOMAIN = 'hsb.edu.vn';
 
@@ -42,16 +43,27 @@
             try {
                 const { user } = await signInWithPopup(auth, new GoogleAuthProvider());
 
-                if (user.email.endsWith('@' + ALLOWED_DOMAIN)) {
-                    window.location.href = 'admin.html';
-                } else {
+                if (!user.email.endsWith('@' + ALLOWED_DOMAIN)) {
                     await signOut(auth);
-                    errorEl.innerHTML = '❌ Chỉ tài khoản <b>@' + ALLOWED_DOMAIN + '</b> mới có quyền truy cập.<br>Email của bạn: <b>' + user.email + '</b>';
+                    errorEl.innerHTML = '&#10060; Chỉ tài khoản <b>@' + ALLOWED_DOMAIN + '</b> mới có quyền truy cập.<br>Email của bạn: <b>' + user.email + '</b>';
                     errorEl.classList.remove('hidden');
+                    return;
                 }
+
+                const adminSnap = await getDoc(doc(db, 'admins', user.email));
+                if (!adminSnap.exists()) {
+                    await signOut(auth);
+                    errorEl.innerHTML = '&#10060; Tài khoản <b>' + user.email + '</b> không có quyền truy cập hệ thống quản trị.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                window.location.href = 'admin.html';
             } catch (err) {
                 if (err.code !== 'auth/popup-closed-by-user') {
-                    errorEl.innerHTML = '❌ Đăng nhập thất bại: ' + err.message;
+                    errorEl.innerHTML = '&#10060; Đăng nhập thất bại'
+                        + (err.code ? ' (<b>' + err.code + '</b>)' : '')
+                        + ': ' + err.message;
                     errorEl.classList.remove('hidden');
                 }
             } finally {

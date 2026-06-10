@@ -69,7 +69,7 @@
     <script type="module">
         import { db, auth } from '../shared/firebase.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
-        import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+        import { doc, getDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
         // Check auth before showing anything
         const user = await new Promise(resolve => {
@@ -78,6 +78,13 @@
 
         if (!user || !user.email.endsWith('@hsb.edu.vn')) {
             if (user) await signOut(auth);
+            window.location.href = 'login.html';
+            throw new Error('redirect');
+        }
+
+        const adminSnap = await getDoc(doc(db, 'admins', user.email));
+        if (!adminSnap.exists()) {
+            await signOut(auth);
             window.location.href = 'login.html';
             throw new Error('redirect');
         }

@@ -16,6 +16,8 @@
             Cảm ơn bạn đã gửi phản hồi! &#x2714;
         </div>
 
+        <div id="error-msg" class="hidden bg-red-100 text-red-700 border border-red-300 rounded px-4 py-3 mb-6 text-sm"></div>
+
         <form id="feedback-form" class="bg-white rounded-lg shadow p-6 space-y-5" novalidate>
 
             <!-- Name (optional) -->
@@ -135,6 +137,9 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Đang gửi...';
 
+            const errorEl = document.getElementById('error-msg');
+            errorEl.classList.add('hidden');
+
             try {
                 await addDoc(collection(db, 'feedbackEntries'), entry);
 
@@ -147,7 +152,11 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch (err) {
                 console.error(err);
-                alert('Có lỗi khi gửi phản hồi. Vui lòng thử lại.');
+                errorEl.innerHTML = '&#10060; Lỗi gửi phản hồi'
+                    + (err.code ? ' (<b>' + err.code + '</b>)' : '')
+                    + ': ' + err.message;
+                errorEl.classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Gửi Phản Hồi';
