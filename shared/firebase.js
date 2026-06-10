@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-analytics.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBi0c7pIOru8-phOMHe2K5xPDU5-0nLFQ0",
@@ -14,8 +14,4 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
-
-try { getAnalytics(app); } catch (e) {}
-
-console.log('[Firebase] project:', firebaseConfig.projectId);
-console.log('[Firebase] Firestore ready:', !!db);
+export const auth = getAuth(app);
