@@ -1,0 +1,115 @@
+'use strict';
+const fs    = require('fs');
+const path  = require('path');
+const { google }  = require('googleapis');
+const admin = require('firebase-admin');
+
+// ── Config ────────────────────────────────────────────────────
+const SPREADSHEET_ID = '1V0Os-5oE90-G1A3Do1MUBiwNtFoi1HEGHISdsHs8W3s';
+const SHEET_TAB      = 'Sheet1';
+const CREDS_PATH     = path.resolve(__dirname, '..', 'credentials.json');
+
+// ── Load credentials ──────────────────────────────────────────
+if (!fs.existsSync(CREDS_PATH)) {
+  console.error('✗  credentials.json not found at project root.');
+  console.error('   Download it from Firebase Console → Project Settings → Service Accounts → Generate new private key');
+  process.exit(1);
+}
+const credentials = JSON.parse(fs.readFileSync(CREDS_PATH, 'utf8'));
+
+// ── Firebase Admin (Firestore read) ───────────────────────────
+admin.initializeApp({ credential: admin.credential.cert(credentials) });
+const db = admin.firestore();
+
+// ── Google Sheets (write) ─────────────────────────────────────
+const auth = new google.auth.GoogleAuth({
+  credentials,
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+});
+const sheets = google.sheets({ version: 'v4', auth });
+
+// ── Helpers ───────────────────────────────────────────────────
+function formatDate(iso) {
+  const d   = new Date(iso);
+  const pad = n => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// ── Main sync ─────────────────────────────────────────────────
+async function sync() {
+  // 1. Read Firestore
+  console.log('Đang tải dữ liệu từ Firestore...');
+  const snap = await db.collection('feedbackEntries')
+    .orderBy('timestamp', 'desc')
+    .get();
+
+  const rows = snap.docs.map(doc => {
+    const e = doc.data();
+    return [
+      formatDate(e.timestamp),
+      e.location  || '',
+      e.rating,
+      e.name      || '',
+      e.comment   || '',
+    ];
+  });
+  console.log(`  → ${rows.length} phản hồi`);
+
+  // 2. Clear old data
+  console.log('Đang ghi vào Google Sheets...');
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEET_TAB}!A:Z`,
+  });
+
+  // 3. Write headers + rows
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEET_TAB}!A1`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values: [
+        ['Ngày', 'Địa điểm', 'Đánh giá (★)', 'Tên', 'Nhận xét'],
+        ...rows,
+      ],
+    },
+  });
+
+  // 4. Bold the header row
+  const { data: { sheets: sheetList } } = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+  const sheetId = sheetList.find(s => s.properties.title === SHEET_TAB)?.properties.sheetId ?? 0;
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        {
+          repeatCell: {
+            range: { sheetId, startRowIndex: 0, endRowIndex: 1 },
+            cell: { userEnteredFormat: { textFormat: { bold: true }, backgroundColor: { red: 0.06, green: 0.35, blue: 0.78 } } },
+            fields: 'userEnteredFormat(textFormat,backgroundColor)',
+          },
+        },
+        {
+          autoResizeDimensions: {
+            dimensions: { sheetId, dimension: 'COLUMNS', startIndex: 0, endIndex: 5 },
+          },
+        },
+      ],
+    },
+  });
+
+  console.log(`✓ Xong — ${rows.length} hàng đã đồng bộ lên Google Sheets`);
+  process.exit(0);
+}
+
+sync().catch(err => {
+  console.error('✗ Lỗi:', err.message);
+  if (err.message.includes('PERMISSION_DENIED') || err.message.includes('UNAUTHENTICATED')) {
+    console.error('\n  Hướng dẫn sửa:');
+    console.error('  1. Vào Firebase Console → Project Settings → Service Accounts → Generate new private key');
+    console.error('  2. Lưu file tải về là credentials.json ở thư mục gốc dự án');
+    console.error('  3. Chia sẻ Google Sheet với email trong credentials.json (trường "client_email")');
+  }
+  process.exit(1);
+});
