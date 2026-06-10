@@ -25,6 +25,11 @@ module.exports = async function handler(req, res) {
     if (credentials.private_key) {
       credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
     }
+    // DEBUG: verify which service account is being used (remove after fix confirmed)
+    if (!credentials.client_email) {
+      return res.status(500).json({ error: 'credentials missing client_email', keys: Object.keys(credentials) });
+    }
+    return res.status(500).json({ debug_client_email: credentials.client_email, private_key_starts: credentials.private_key.slice(0,40) });
 
     const auth = new google.auth.GoogleAuth({
       credentials,
