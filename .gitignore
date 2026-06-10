@@ -2,5 +2,6 @@
 *.env
 node_modules/
 credentials.json
+sync.log
 *service-account*.json
 *.key.json
