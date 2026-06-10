@@ -12,6 +12,7 @@
         <h1 class="text-xl font-bold text-gray-800 mb-6 text-center">Đăng Nhập Quản Trị</h1>
 
         <div id="error-msg" class="hidden bg-red-100 text-red-700 border border-red-300 rounded px-4 py-3 mb-4 text-sm"></div>
+        <div id="info-msg" class="hidden bg-blue-50 text-blue-700 border border-blue-200 rounded px-4 py-3 mb-4 text-sm"></div>
 
         <button id="btn-google"
             class="w-full flex items-center justify-center gap-3 border border-gray-300 rounded px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
@@ -27,48 +28,58 @@
 
     <script type="module">
         import { auth, db } from '../shared/firebase.js';
-        import {
-            signInWithPopup,
-            GoogleAuthProvider,
-            signOut,
-            onAuthStateChanged
-        } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+        import { signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
         import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
         const errorEl = document.getElementById('error-msg');
+        const infoEl  = document.getElementById('info-msg');
+        const btn     = document.getElementById('btn-google');
 
-        async function checkAdminAndRedirect(user) {
+        function showError(msg) {
+            errorEl.innerHTML = msg;
+            errorEl.classList.remove('hidden');
+            infoEl.classList.add('hidden');
+        }
+
+        function showInfo(msg) {
+            infoEl.innerHTML = msg;
+            infoEl.classList.remove('hidden');
+        }
+
+        btn.addEventListener('click', async () => {
+            errorEl.classList.add('hidden');
+            btn.disabled = true;
+            btn.textContent = 'Đang đăng nhập...';
+
             try {
+                // Step 1: Google sign-in
+                showInfo('Bước 1: Đang kết nối Google...');
+                const { user } = await signInWithPopup(auth, new GoogleAuthProvider());
+                console.log('[Login] Signed in as:', user.email);
+
+                // Step 2: Check admins collection
+                showInfo('Bước 2: Đang kiểm tra quyền cho <b>' + user.email + '</b>...');
                 const snap = await getDoc(doc(db, 'admins', user.email));
+                console.log('[Login] Admin doc exists:', snap.exists(), '| email:', user.email);
+
                 if (snap.exists()) {
+                    showInfo('✓ Xác nhận thành công. Đang chuyển hướng...');
                     window.location.href = 'admin.html';
                 } else {
                     await signOut(auth);
-                    errorEl.innerHTML = 'Tài khoản <strong>' + user.email + '</strong> không có trong danh sách quản trị.<br><small>Hãy thêm email này vào collection <code>admins</code> trong Firestore.</small>';
-                    errorEl.classList.remove('hidden');
+                    showError(
+                        '❌ Email <b>' + user.email + '</b> không có quyền truy cập.<br><br>' +
+                        'Vào Firestore Console → collection <code>admins</code> → thêm document với ID chính xác: <b>' + user.email + '</b>'
+                    );
                 }
             } catch (err) {
-                await signOut(auth);
-                errorEl.innerHTML = 'Lỗi kiểm tra quyền: <strong>' + err.message + '</strong><br><small>Email: ' + user.email + '</small>';
-                errorEl.classList.remove('hidden');
-            }
-        }
-
-        // Already signed in → recheck permission
-        onAuthStateChanged(auth, user => {
-            if (user) checkAdminAndRedirect(user);
-        });
-
-        document.getElementById('btn-google').addEventListener('click', async () => {
-            errorEl.classList.add('hidden');
-            try {
-                const result = await signInWithPopup(auth, new GoogleAuthProvider());
-                await checkAdminAndRedirect(result.user);
-            } catch (err) {
+                console.error('[Login] Error:', err.code, err.message);
                 if (err.code !== 'auth/popup-closed-by-user') {
-                    errorEl.textContent = 'Đăng nhập thất bại. Vui lòng thử lại.';
-                    errorEl.classList.remove('hidden');
+                    showError('❌ Lỗi: <b>' + err.code + '</b><br>' + err.message);
                 }
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Đăng nhập với Google';
             }
         });
     </script>
