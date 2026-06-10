@@ -3,30 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Trị</title>
+    <title>Quản Trị — HSB Feedback</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="../shared/style.css">
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body style="background:#020617;min-height:100vh;">
     <div id="app-nav"></div>
-    <div id="auth-loading" class="flex items-center justify-center min-h-screen">
-        <p class="text-gray-400 text-sm">Đang kiểm tra đăng nhập...</p>
+
+    <!-- Auth loading -->
+    <div id="auth-loading" class="flex items-center justify-center" style="min-height:80vh;">
+        <div class="text-center">
+            <div style="width:32px;height:32px;border:2px solid rgba(255,255,255,0.1);border-top-color:#22c55e;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;"></div>
+            <p style="color:#475569;font-size:0.875rem;">Đang kiểm tra đăng nhập...</p>
+        </div>
     </div>
-    <main id="main-content" class="hidden max-w-5xl mx-auto px-6 py-10">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Quản Trị</h1>
-            <button id="btn-logout"
-                class="text-sm text-gray-500 hover:text-red-600 border border-gray-300 hover:border-red-400 px-3 py-1 rounded transition-colors">
+
+    <main id="main-content" class="hidden" style="max-width:80rem;margin:0 auto;padding:2rem 1.5rem;">
+
+        <!-- Page header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-2xl font-semibold text-white mb-0.5">Bảng Quản Trị</h1>
+                <p class="text-sm" style="color:#64748b;">Tổng hợp dữ liệu phản hồi khách hàng</p>
+            </div>
+            <button id="btn-logout" class="flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-150 cursor-pointer"
+                style="color:#64748b;border:1px solid rgba(255,255,255,0.08);"
+                onmouseover="this.style.color='#f87171';this.style.borderColor='rgba(239,68,68,0.3)'"
+                onmouseout="this.style.color='#64748b';this.style.borderColor='rgba(255,255,255,0.08)'">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
                 Đăng xuất
             </button>
         </div>
 
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" id="kpi-row">
+            <div class="rounded-xl p-4" style="background:#0f172a;border:1px solid rgba(255,255,255,0.08);">
+                <p class="text-xs font-medium uppercase tracking-wide mb-2" style="color:#475569;">Tổng phản hồi</p>
+                <p id="kpi-total" class="text-2xl font-bold text-white">—</p>
+            </div>
+            <div class="rounded-xl p-4" style="background:#0f172a;border:1px solid rgba(255,255,255,0.08);">
+                <p class="text-xs font-medium uppercase tracking-wide mb-2" style="color:#475569;">Đánh giá TB</p>
+                <p id="kpi-avg" class="text-2xl font-bold" style="color:#facc15;">—</p>
+            </div>
+            <div class="rounded-xl p-4" style="background:#0f172a;border:1px solid rgba(255,255,255,0.08);">
+                <p class="text-xs font-medium uppercase tracking-wide mb-2" style="color:#475569;">Địa điểm nổi bật</p>
+                <p id="kpi-top-loc" class="text-lg font-bold text-white truncate">—</p>
+            </div>
+            <div class="rounded-xl p-4" style="background:#0f172a;border:1px solid rgba(255,255,255,0.08);">
+                <p class="text-xs font-medium uppercase tracking-wide mb-2" style="color:#475569;">Đánh giá tốt (4-5★)</p>
+                <p id="kpi-positive" class="text-2xl font-bold" style="color:#4ade80;">—</p>
+            </div>
+        </div>
+
         <!-- Filters -->
-        <div class="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap gap-4 items-end">
+        <div class="rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-end" style="background:#0f172a;border:1px solid rgba(255,255,255,0.08);">
             <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Địa điểm</label>
-                <select id="f-location" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-medium uppercase tracking-wide mb-1.5" style="color:#475569;">Địa điểm</label>
+                <select id="f-location" class="dark-input" style="width:auto;min-width:160px;cursor:pointer;">
                     <option value="">Tất cả địa điểm</option>
                     <option value="District 1">District 1</option>
                     <option value="District 3">District 3</option>
@@ -34,46 +70,52 @@
                 </select>
             </div>
             <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Đánh giá tối thiểu</label>
-                <select id="f-rating" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="1">★ 1 trở lên</option>
-                    <option value="2">★★ 2 trở lên</option>
-                    <option value="3">★★★ 3 trở lên</option>
-                    <option value="4">★★★★ 4 trở lên</option>
-                    <option value="5">★★★★★ 5 sao</option>
+                <label class="block text-xs font-medium uppercase tracking-wide mb-1.5" style="color:#475569;">Đánh giá tối thiểu</label>
+                <select id="f-rating" class="dark-input" style="width:auto;min-width:160px;cursor:pointer;">
+                    <option value="1">1★ trở lên</option>
+                    <option value="2">2★ trở lên</option>
+                    <option value="3">3★ trở lên</option>
+                    <option value="4">4★ trở lên</option>
+                    <option value="5">5★ chỉ</option>
                 </select>
             </div>
             <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Từ ngày</label>
-                <input type="date" id="f-from" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-medium uppercase tracking-wide mb-1.5" style="color:#475569;">Từ ngày</label>
+                <input type="date" id="f-from" class="dark-input" style="width:auto;">
             </div>
             <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Đến ngày</label>
-                <input type="date" id="f-to" class="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-medium uppercase tracking-wide mb-1.5" style="color:#475569;">Đến ngày</label>
+                <input type="date" id="f-to" class="dark-input" style="width:auto;">
             </div>
         </div>
 
         <!-- Charts -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div class="bg-white rounded-lg shadow p-4">
-                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Phân bố đánh giá</h3>
-                <canvas id="chart-rating"></canvas>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="rounded-xl p-4" style="background:#0f172a;border:1px solid rgba(255,255,255,0.08);">
+                <p class="text-xs font-medium uppercase tracking-wide mb-4" style="color:#475569;">Phân bố đánh giá</p>
+                <canvas id="chart-rating" height="180"></canvas>
             </div>
-            <div class="bg-white rounded-lg shadow p-4">
-                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Theo địa điểm</h3>
-                <canvas id="chart-location"></canvas>
+            <div class="rounded-xl p-4" style="background:#0f172a;border:1px solid rgba(255,255,255,0.08);">
+                <p class="text-xs font-medium uppercase tracking-wide mb-4" style="color:#475569;">Theo địa điểm</p>
+                <canvas id="chart-location" height="180"></canvas>
             </div>
-            <div class="bg-white rounded-lg shadow p-4">
-                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Theo thời gian</h3>
-                <canvas id="chart-timeline"></canvas>
+            <div class="rounded-xl p-4" style="background:#0f172a;border:1px solid rgba(255,255,255,0.08);">
+                <p class="text-xs font-medium uppercase tracking-wide mb-4" style="color:#475569;">Theo thời gian</p>
+                <canvas id="chart-timeline" height="180"></canvas>
             </div>
         </div>
 
         <!-- Count + Export -->
         <div class="flex items-center justify-between mb-3">
-            <p id="row-count" class="text-sm text-gray-500"></p>
+            <p id="row-count" class="text-sm" style="color:#64748b;"></p>
             <button id="btn-export"
-                class="bg-green-600 text-white text-sm font-medium px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                class="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150 cursor-pointer focus:outline-none"
+                style="background:#22c55e;color:#fff;"
+                onmouseover="this.style.background='#16a34a'"
+                onmouseout="this.style.background='#22c55e'">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
                 Xuất CSV
             </button>
         </div>
@@ -82,13 +124,19 @@
         <div id="table-container"></div>
     </main>
 
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+        #table-container tr { transition: background 0.1s; }
+    </style>
+
     <script src="../shared/nav.js"></script>
     <script type="module">
         import { db, auth } from '../shared/firebase.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
         import { doc, getDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
 
-        // Check auth before showing anything
+        // Auth guard
         const user = await new Promise(resolve => {
             const unsub = onAuthStateChanged(auth, u => { unsub(); resolve(u); });
         });
@@ -109,28 +157,45 @@
         document.getElementById('auth-loading').classList.add('hidden');
         document.getElementById('main-content').classList.remove('hidden');
 
-        // --- Charts ---
+        document.getElementById('btn-logout').addEventListener('click', async () => {
+            await signOut(auth);
+            window.location.href = '/login';
+        });
+
+        // --- Chart.js dark defaults ---
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+        Chart.defaults.font.family = "'Fira Sans', system-ui, sans-serif";
+        Chart.defaults.font.size = 12;
+
+        const gridOpts = { color: 'rgba(255,255,255,0.05)', drawBorder: false };
+
         const ratingChart = new Chart(document.getElementById('chart-rating'), {
             type: 'bar',
             data: {
                 labels: ['1★', '2★', '3★', '4★', '5★'],
                 datasets: [{
-                    data: [0, 0, 0, 0, 0],
-                    backgroundColor: ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e'],
-                    borderRadius: 4
+                    data: [0,0,0,0,0],
+                    backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'],
+                    borderRadius: 6,
+                    borderSkipped: false
                 }]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw} phản hồi` } } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: '#475569' }, grid: gridOpts }, x: { ticks: { color: '#64748b' }, grid: { display: false } } }
             }
         });
 
         const locationChart = new Chart(document.getElementById('chart-location'), {
             type: 'doughnut',
-            data: { labels: [], datasets: [{ data: [], backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316'] }] },
-            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+            data: { labels: [], datasets: [{ data: [], backgroundColor: ['#3b82f6','#8b5cf6','#ec4899','#f97316'], borderWidth: 2, borderColor: '#0f172a' }] },
+            options: {
+                responsive: true,
+                cutout: '65%',
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, color: '#64748b', padding: 12, boxWidth: 10 } } }
+            }
         });
 
         const timelineChart = new Chart(document.getElementById('chart-timeline'), {
@@ -138,24 +203,26 @@
             data: {
                 labels: [],
                 datasets: [{
-                    label: 'Phản hồi',
                     data: [],
                     borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59,130,246,0.1)',
+                    backgroundColor: 'rgba(59,130,246,0.08)',
                     fill: true,
-                    tension: 0.3,
-                    pointRadius: 3
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#0f172a',
+                    pointBorderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: '#475569' }, grid: gridOpts }, x: { ticks: { color: '#64748b' }, grid: { display: false } } }
             }
         });
 
         function updateCharts(entries) {
-            const ratingCounts = [0, 0, 0, 0, 0];
+            const ratingCounts = [0,0,0,0,0];
             entries.forEach(e => { if (e.rating >= 1 && e.rating <= 5) ratingCounts[e.rating - 1]++; });
             ratingChart.data.datasets[0].data = ratingCounts;
             ratingChart.update();
@@ -169,64 +236,78 @@
             const dayMap = {};
             entries.forEach(e => { const d = e.timestamp.slice(0, 10); dayMap[d] = (dayMap[d] || 0) + 1; });
             const days = Object.keys(dayMap).sort();
-            timelineChart.data.labels = days.map(d => { const [y, m, day] = d.split('-'); return `${day}/${m}`; });
+            timelineChart.data.labels = days.map(d => { const [,m,day] = d.split('-'); return `${day}/${m}`; });
             timelineChart.data.datasets[0].data = days.map(d => dayMap[d]);
             timelineChart.update();
         }
 
-        document.getElementById('btn-logout').addEventListener('click', async () => {
-            await signOut(auth);
-            window.location.href = '/login';
-        });
-
+        // --- Helpers ---
         function formatDate(iso) {
             const d = new Date(iso);
-            const dd  = String(d.getDate()).padStart(2, '0');
-            const mm  = String(d.getMonth() + 1).padStart(2, '0');
-            const hh  = String(d.getHours()).padStart(2, '0');
-            const min = String(d.getMinutes()).padStart(2, '0');
-            return `${dd}/${mm}/${d.getFullYear()} ${hh}:${min}`;
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
         }
 
-        function renderStars(rating) {
-            return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+        function renderStars(r) {
+            return `<span style="color:#facc15;letter-spacing:1px">${'★'.repeat(r)}</span><span style="color:#334155">${'★'.repeat(5-r)}</span>`;
         }
 
-        function rowBg(rating) {
-            if (rating <= 2) return 'bg-red-100';
-            if (rating === 3) return 'bg-yellow-100';
-            return 'bg-green-100';
+        function ratingBadge(r) {
+            if (r <= 2) return 'rgba(239,68,68,0.12)';
+            if (r === 3) return 'rgba(234,179,8,0.1)';
+            return 'rgba(34,197,94,0.08)';
         }
 
-        function dayStart(str) { const d = new Date(str); d.setHours(0,0,0,0); return d; }
-        function dayEnd(str)   { const d = new Date(str); d.setHours(23,59,59,999); return d; }
+        function dayStart(s) { const d = new Date(s); d.setHours(0,0,0,0); return d; }
+        function dayEnd(s)   { const d = new Date(s); d.setHours(23,59,59,999); return d; }
 
+        // --- Load data ---
         const container = document.getElementById('table-container');
-        container.innerHTML = '<p class="text-gray-500 text-sm">Đang tải...</p>';
+        container.innerHTML = '<p style="color:#475569;font-size:0.875rem;">Đang tải dữ liệu...</p>';
 
         let allEntries = [];
         let currentFiltered = [];
 
         try {
             const snapshot = await getDocs(query(collection(db, 'feedbackEntries'), orderBy('timestamp', 'desc')));
-            allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            allEntries = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         } catch (err) {
             console.error(err);
-            container.innerHTML = '<p class="text-red-500 text-sm">Lỗi tải dữ liệu: <b>' + err.code + '</b> — ' + err.message + '</p>';
+            container.innerHTML = `<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#f87171;border-radius:12px;padding:16px;font-size:0.875rem;">Lỗi tải dữ liệu: <b>${err.code}</b> — ${err.message}</div>`;
         }
 
+        // KPI cards
+        function renderKPIs() {
+            document.getElementById('kpi-total').textContent = allEntries.length;
+
+            const avg = allEntries.length
+                ? (allEntries.reduce((s, e) => s + e.rating, 0) / allEntries.length).toFixed(1)
+                : '—';
+            document.getElementById('kpi-avg').textContent = avg !== '—' ? avg + ' ★' : '—';
+
+            const locMap = {};
+            allEntries.forEach(e => { const k = e.location || 'Khác'; locMap[k] = (locMap[k] || 0) + 1; });
+            const topLoc = Object.keys(locMap).sort((a,b) => locMap[b] - locMap[a])[0] || '—';
+            document.getElementById('kpi-top-loc').textContent = topLoc;
+
+            const positive = allEntries.filter(e => e.rating >= 4).length;
+            const pct = allEntries.length ? Math.round(positive / allEntries.length * 100) : 0;
+            document.getElementById('kpi-positive').textContent = allEntries.length ? pct + '%' : '—';
+        }
+        renderKPIs();
+
+        // --- Filters ---
         function applyFilters() {
-            const loc     = document.getElementById('f-location').value;
-            const minRat  = parseInt(document.getElementById('f-rating').value);
-            const fromVal = document.getElementById('f-from').value;
-            const toVal   = document.getElementById('f-to').value;
+            const loc    = document.getElementById('f-location').value;
+            const minRat = parseInt(document.getElementById('f-rating').value);
+            const fromV  = document.getElementById('f-from').value;
+            const toV    = document.getElementById('f-to').value;
 
             currentFiltered = allEntries.filter(e => {
                 if (loc && e.location !== loc) return false;
                 if (e.rating < minRat) return false;
                 const ts = new Date(e.timestamp);
-                if (fromVal && ts < dayStart(fromVal)) return false;
-                if (toVal   && ts > dayEnd(toVal))     return false;
+                if (fromV && ts < dayStart(fromV)) return false;
+                if (toV   && ts > dayEnd(toV))     return false;
                 return true;
             });
 
@@ -236,77 +317,66 @@
 
             if (allEntries.length === 0) {
                 countEl.textContent = '';
-                container.innerHTML = '<p class="text-gray-500 text-sm">Chưa có phản hồi nào. (No feedback yet)</p>';
+                container.innerHTML = '<p style="color:#475569;font-size:0.875rem;">Chưa có phản hồi nào.</p>';
                 return;
             }
 
             countEl.textContent = `Hiển thị ${currentFiltered.length} / ${allEntries.length} phản hồi`;
 
             if (currentFiltered.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-sm">Không có phản hồi nào khớp với bộ lọc. (No feedback matches your filters)</p>';
+                container.innerHTML = '<p style="color:#475569;font-size:0.875rem;">Không có phản hồi nào khớp với bộ lọc.</p>';
                 return;
             }
 
             const rows = currentFiltered.map(e => `
-                <tr class="border-t border-gray-200 ${rowBg(e.rating)}">
-                    <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(e.timestamp)}</td>
-                    <td class="px-4 py-3 text-sm text-gray-700">${e.location || '—'}</td>
-                    <td class="px-4 py-3 text-sm text-yellow-500 whitespace-nowrap tracking-tight">${renderStars(e.rating)}</td>
-                    <td class="px-4 py-3 text-sm text-gray-700">${e.name || '—'}</td>
-                    <td class="px-4 py-3 text-sm text-gray-700">${e.comment}</td>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:${ratingBadge(e.rating)};cursor:default;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+                    onmouseout="this.style.background='${ratingBadge(e.rating)}'">
+                    <td style="padding:12px 16px;font-size:0.8125rem;color:#64748b;white-space:nowrap;">${formatDate(e.timestamp)}</td>
+                    <td style="padding:12px 16px;font-size:0.8125rem;color:#94a3b8;">${e.location || '<span style="color:#334155">—</span>'}</td>
+                    <td style="padding:12px 16px;font-size:0.8125rem;white-space:nowrap;">${renderStars(e.rating)}</td>
+                    <td style="padding:12px 16px;font-size:0.8125rem;color:#94a3b8;">${e.name || '<span style="color:#334155">—</span>'}</td>
+                    <td style="padding:12px 16px;font-size:0.8125rem;color:#cbd5e1;max-width:320px;">${e.comment}</td>
                 </tr>`).join('');
 
             container.innerHTML = `
-                <div class="overflow-x-auto rounded-lg shadow">
-                    <table class="min-w-full bg-white text-left">
-                        <thead class="bg-blue-700 text-white text-xs uppercase tracking-wider">
-                            <tr>
-                                <th class="px-4 py-3">Ngày</th>
-                                <th class="px-4 py-3">Địa điểm</th>
-                                <th class="px-4 py-3">Đánh giá</th>
-                                <th class="px-4 py-3">Tên</th>
-                                <th class="px-4 py-3">Nhận xét</th>
-                            </tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>
+                <div style="border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;background:#0f172a;text-align:left;">
+                            <thead>
+                                <tr style="background:#1e293b;">
+                                    <th style="padding:10px 16px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#475569;">Ngày</th>
+                                    <th style="padding:10px 16px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#475569;">Địa điểm</th>
+                                    <th style="padding:10px 16px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#475569;">Đánh giá</th>
+                                    <th style="padding:10px 16px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#475569;">Tên</th>
+                                    <th style="padding:10px 16px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#475569;">Nhận xét</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
                 </div>`;
         }
 
-        ['f-location', 'f-rating', 'f-from', 'f-to'].forEach(id =>
+        ['f-location','f-rating','f-from','f-to'].forEach(id =>
             document.getElementById(id).addEventListener('change', applyFilters)
         );
 
-        function csvField(val) {
-            return '"' + String(val ?? '').replace(/"/g, '""') + '"';
-        }
+        // --- CSV Export ---
+        function csvField(val) { return '"' + String(val ?? '').replace(/"/g, '""') + '"'; }
 
         document.getElementById('btn-export').addEventListener('click', () => {
-            if (currentFiltered.length === 0) {
-                alert('Nothing to export');
-                return;
-            }
-
+            if (currentFiltered.length === 0) { alert('Không có dữ liệu để xuất.'); return; }
             const header = 'Date,Location,Rating,Name,Comment';
-            const lines = currentFiltered.map(e =>
-                [
-                    formatDate(e.timestamp),
-                    e.location || '',
-                    e.rating,
-                    e.name || '',
-                    csvField(e.comment)
-                ].join(',')
+            const lines  = currentFiltered.map(e =>
+                [formatDate(e.timestamp), e.location || '', e.rating, e.name || '', csvField(e.comment)].join(',')
             );
-
-            const BOM = '﻿';
-            const csv = BOM + [header, ...lines].join('\r\n');
+            const csv  = '﻿' + [header, ...lines].join('\r\n');
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-
-            const today = new Date().toISOString().slice(0, 10);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `feedback-export-${today}.csv`;
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = `feedback-${new Date().toISOString().slice(0,10)}.csv`;
             a.click();
             URL.revokeObjectURL(url);
         });
