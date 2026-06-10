@@ -1,8 +1,10 @@
 'use strict';
 const fs    = require('fs');
 const path  = require('path');
-const { google }  = require('googleapis');
-const admin = require('firebase-admin');
+const { google }           = require('googleapis');
+const { initializeApp }    = require('firebase-admin/app');
+const { getFirestore }     = require('firebase-admin/firestore');
+const { cert }             = require('firebase-admin/app');
 
 // ── Config ────────────────────────────────────────────────────
 const SPREADSHEET_ID = '1V0Os-5oE90-G1A3Do1MUBiwNtFoi1HEGHISdsHs8W3s';
@@ -18,8 +20,8 @@ if (!fs.existsSync(CREDS_PATH)) {
 const credentials = JSON.parse(fs.readFileSync(CREDS_PATH, 'utf8'));
 
 // ── Firebase Admin (Firestore read) ───────────────────────────
-admin.initializeApp({ credential: admin.credential.cert(credentials) });
-const db = admin.firestore();
+initializeApp({ credential: cert(credentials) });
+const db = getFirestore();
 
 // ── Google Sheets (write) ─────────────────────────────────────
 const auth = new google.auth.GoogleAuth({
@@ -55,17 +57,24 @@ async function sync() {
   });
   console.log(`  → ${rows.length} phản hồi`);
 
-  // 2. Clear old data
+  // 2. Detect actual sheet tab name
+  const { data: { sheets: sheetList } } = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+  const firstSheet = sheetList[0].properties;
+  const tabName    = firstSheet.title;
+  const sheetId    = firstSheet.sheetId;
+  console.log(`  → Tab: "${tabName}"`);
+
+  // 3. Clear old data
   console.log('Đang ghi vào Google Sheets...');
   await sheets.spreadsheets.values.clear({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEET_TAB}!A:Z`,
+    range: `${tabName}!A:Z`,
   });
 
-  // 3. Write headers + rows
+  // 4. Write headers + rows
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEET_TAB}!A1`,
+    range: `${tabName}!A1`,
     valueInputOption: 'USER_ENTERED',
     requestBody: {
       values: [
@@ -74,10 +83,6 @@ async function sync() {
       ],
     },
   });
-
-  // 4. Bold the header row
-  const { data: { sheets: sheetList } } = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
-  const sheetId = sheetList.find(s => s.properties.title === SHEET_TAB)?.properties.sheetId ?? 0;
 
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,

@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "sync": "node scripts/sync-to-sheets.js"
+  },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
     "firebase": "^12.14.0",
