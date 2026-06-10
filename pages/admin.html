@@ -76,7 +76,8 @@
             const unsub = onAuthStateChanged(auth, u => { unsub(); resolve(u); });
         });
 
-        if (!user) {
+        if (!user || !user.email.endsWith('@hsb.edu.vn')) {
+            if (user) await signOut(auth);
             window.location.href = 'login.html';
         }
 
